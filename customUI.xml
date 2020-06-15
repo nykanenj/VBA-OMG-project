@@ -1,0 +1,16 @@
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" onLoad="loadCustomUI">
+  <ribbon>
+    <tabs>
+      <tab id="OMGtab" label="OMG-toiminnot" insertAfterMso="TabHome">
+        <group id="rRaportit" label="Toiminnot">
+
+          <button id="btnOhjeet" label="Ohjeet" size="large" imageMso="CLViewDialogHelpID" onAction="customUIActions" tag="displayInstructions"/>
+
+          <button id="btnLisääSopimushinnat" label="LisääSopimushinnat" size="large" imageMso="QueryInsertColumns" onAction="customUIActions" tag="contractColumnsMacro"/>
+
+        </group>
+
+      </tab>
+    </tabs>
+  </ribbon>
+</customUI>

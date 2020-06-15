@@ -1,8 +1,52 @@
 
+Public thisWB As Workbook
+Public resultSheet As Worksheet
+
+
 Sub contractColumnsMacro()
 
+    Set thisWB = ThisWorkbook
+    Set resultSheet = createSheet()
 
 End Sub
+
+Private Function createSheet() As Worksheet
+
+    Dim sheetName As String
+    Dim ws As Worksheet
+
+    Dim i As Integer
+
+    Dim y As Integer
+    Dim m As Integer
+    Dim d As Integer
+
+    y = Year(Now())
+    m = Month(Now())
+    d = Day(Now())
+
+    sheetName = "Lopputulos_" & Day(Now()) & "_" & Month(Now()) & "_klo_" & Hour(Now()) & "_" & Minute(Now())
+
+    i = 0
+    Do While i < 10
+        i = i + 1
+
+        For Each ws In thisWB.Worksheets
+            If ws.Name = sheetName Then GoTo NextCycle
+        Next ws
+        GoTo Continue
+
+NextCycle:
+        sheetName = sheetName & "(" & i & ")"
+    Loop
+
+Continue:
+
+    Set createPDFsheet = thisWB.Sheets.Add(After:=thisWB.Sheets(thisWB.Sheets.Count))
+    createPDFsheet.Name = sheetName
+    DoEvents
+
+End Function
 
 Private Sub displayInstructions()
 
@@ -48,3 +92,5 @@ Sub saveByDateTime()
     ActiveWorkbook.SaveAs Filename:=filenameAndPath
 
 End Sub
+
+
