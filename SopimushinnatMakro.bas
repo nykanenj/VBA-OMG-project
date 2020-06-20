@@ -1,12 +1,113 @@
 
 Public thisWB As Workbook
+Public sourceWB as Workbook
+Public sourceSheet As Worksheet
 Public resultSheet As Worksheet
+Public errorSheet As Worksheet
 
+Public D_warnings As Scripting.Dictionary
+Public D_errors As Scripting.Dictionary
+
+Public Const CNST_errorSheetName As String = "Virheet Makroajossa"
+Public Const CNST_contractPricesSheetName As String = "Sopimushinnat"
 
 Sub contractColumnsMacro()
 
+    Call setDictsWorkbooksAndSheets()
+
+    Call cleanup()
+
+End Sub
+
+Private Sub runChecks()
+
+    Dim sheetName As String
+    Dim ws As Worksheet
+
+    Dim bool_contractPricesSheet As Boolean
+    Dim bool_errorSheet As Boolean
+
+    bool_contractPricesSheet = False
+    bool_errorSheet = False
+
+    For Each ws in thisWB.Worksheets
+        Select Case ws.Name
+            Case CNST_contractPricesSheetName
+                bool_contractPricesSheet = True
+            Case CNST_errorSheetName
+                bool_errorSheet = True
+                Set errorSheet = ws
+        End Select
+    Next ws
+
+    If Not bool_contractPricesSheet Then D_errors.Add "Sopimushinnat -välilehti puuttuu", True
+    If Not bool_errorSheet Then 
+        Set errorSheet = thisWB.Sheets.Add(After:=thisWB.Sheets(thisWB.Sheets.Count))
+        errorSheet.Name = CNST_errorSheetName
+    Else
+        Set errorSheet = thisWB.Sheets(CNST_errorSheetName)
+    End If
+
+End Sub
+
+Private Sub setDictsWorkbooksAndSheets()
+
+    Set D_warnings = New Scripting.Dictionary
+    Set D_errors = New Scripting.Dictionary
     Set thisWB = ThisWorkbook
+    Call runChecks()
+    Set sourceSheet = setSourceSheet()
+
+    If D_errors.Count > 0 Then
+        Call warningsAndErrors
+        Exit Sub
+    End If
+
     Set resultSheet = createSheet()
+
+End Sub
+
+Private Function setSourceSheet() As WorkSheet
+
+    Dim strPath As String
+    Dim strFile As String
+    Dim errorMsg As String
+    Dim errorCode As String
+
+    strPath = thisWB.Path & "\"
+    strFile = Dir(strPath & "*.xlsx")
+
+    If strFile = "" Then
+        errorCode = "404"
+        errorMsg = "Could not find a file in current folder with file ending .xlsx"
+        GoTo handleError
+    End If
+
+    'Do While strFile <> ""
+    Set sourceWB = Workbooks.Open(Filename:=strPath & strFile)
+    DoEvents
+
+    If sourceWB.Worksheets.count > 1 Then
+        errorCode = "500"
+        errorMsg = "Tried to read from workbook " & strFile & vbCrLf & _ 
+                    "Error: Too many worksheets in workbook. Should have only one worksheet."
+        GoTo handleError
+    End If
+    
+    Set setSourceSheet = sourceWB.Worksheets(1)
+
+    'strFile = Dir 'This moves the value of strFile to the next file.
+    'Loop
+
+    Exit Function
+handleError:
+    Call addError(errorCode, errorMsg)
+
+End Function
+
+Sub cleanup()
+
+    sourceWB.Close SaveChanges:= False
 
 End Sub
 
@@ -42,8 +143,9 @@ NextCycle:
 
 Continue:
 
-    Set createPDFsheet = thisWB.Sheets.Add(After:=thisWB.Sheets(thisWB.Sheets.Count))
-    createPDFsheet.Name = sheetName
+    sourceSheet.Copy Before:=ThisWB.Sheets(1)
+    Set createSheet = thisWB.Sheets(1)
+    createSheet.Name = sheetName
     DoEvents
 
 End Function
@@ -83,6 +185,30 @@ Private Sub addWarning(i As Variant, warning As String)
     
 End Sub
 
+Private Sub warningsAndErrors()
+
+    Dim key As Variant
+    Dim error As String
+
+    warning = ""
+    For Each key In D_warnings.Keys()
+            warning = warning & vbCrLf & D_warnings(key)
+    Next key
+    If warning <> "" Then MsgBox warning, vbExclamation, "Varoitukset"
+
+    error = ""
+
+    For Each key In D_errors.Keys()
+            error = error & vbCrLf & key
+    Next key
+    If error <> "" Then MsgBox error, vbCritical, "Virheet makron ajossa"
+
+    errorSheet.Range("A1") = warning
+    errorSheet.Range("A2") = error
+    DoEvents
+
+End Sub
+
 Sub saveByDateTime()
 
     Dim filenameAndPath As String
@@ -90,6 +216,20 @@ Sub saveByDateTime()
     filenameAndPath = ThisWorkbook.Path & "\SopimusHinnatPohja_" & Year(Now()) & "_" & Month(Now()) & "_" & Day(Now()) & "_klo_" & Hour(Now()) & "_" & Minute(Now()) & ".xlsm"
 
     ActiveWorkbook.SaveAs Filename:=filenameAndPath
+
+End Sub
+
+
+Private Sub testFuncCopySheet()
+
+'Not used, remove when done.
+    Application.ScreenUpdating = False
+ 
+    Set closedBook = Workbooks.Open("D:\Dropbox\excel\articles\example.xlsm")
+    closedBook.Sheets("Sheet1").Copy Before:=ThisWorkbook.Sheets(1)
+    closedBook.Close SaveChanges:=False
+ 
+    Application.ScreenUpdating = True
 
 End Sub
 
