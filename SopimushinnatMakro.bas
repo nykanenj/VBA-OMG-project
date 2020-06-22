@@ -1,6 +1,7 @@
 
 Public thisWB As Workbook
 Public sourceWB as Workbook
+Public contractPricesSheet As Worksheet
 Public sourceSheet As Worksheet
 Public resultSheet As Worksheet
 Public errorSheet As Worksheet
@@ -14,7 +15,7 @@ Public Const CNST_contractPricesSheetName As String = "Sopimushinnat"
 Sub contractColumnsMacro()
 
     Call setDictsWorkbooksAndSheets()
-
+    Call gatherContractPrices()
     Call cleanup()
 
 End Sub
@@ -40,7 +41,11 @@ Private Sub runChecks()
         End Select
     Next ws
 
-    If Not bool_contractPricesSheet Then D_errors.Add "Sopimushinnat -välilehti puuttuu", True
+    If Not bool_contractPricesSheet Then 
+        D_errors.Add "Sopimushinnat -välilehti puuttuu", True
+    Else
+        Set contractPricesSheet = thisWB.Sheets(CNST_contractPricesSheetName)
+    End If
     If Not bool_errorSheet Then 
         Set errorSheet = thisWB.Sheets.Add(After:=thisWB.Sheets(thisWB.Sheets.Count))
         errorSheet.Name = CNST_errorSheetName
@@ -105,12 +110,6 @@ handleError:
 
 End Function
 
-Sub cleanup()
-
-    sourceWB.Close SaveChanges:= False
-
-End Sub
-
 Private Function createSheet() As Worksheet
 
     Dim sheetName As String
@@ -149,6 +148,40 @@ Continue:
     DoEvents
 
 End Function
+
+Sub gatherContractPrices()
+
+    Dim contractPrices As Variant
+    Dim i As Integer
+    Dim j As Integer
+    Dim key as Variant
+
+
+    contractPrices = contractPricesSheet.Range("A1").CurrentRegion.Value
+
+    For i = 3 to UBound(contractPrices, 1)
+
+        key = contractPrices(i, 1)
+
+        contractPricesObj.partnersSopimushinta = contractPrices(i, 2)
+        contractPricesObj.servicesSopimushinta = contractPrices(i, 3)
+        contractPricesObj.planningSopimushinta = contractPrices(i, 4)
+        contractPricesObj.insightSopimushinta = contractPrices(i, 5)
+        contractPricesObj.dashTech = contractPrices(i, 6)
+        contractPricesObj.digAnalytic = contractPrices(i, 7)
+        contractPricesObj.marketScien = contractPrices(i, 8)
+        contractPricesObj.stratCons = contractPrices(i, 9)
+
+    Next i
+
+
+End Sub
+
+Sub cleanup()
+
+    sourceWB.Close SaveChanges:= False
+
+End Sub
 
 Private Sub displayInstructions()
 
