@@ -6,6 +6,7 @@ Public sourceSheet As Worksheet
 Public resultSheet As Worksheet
 Public errorSheet As Worksheet
 
+Public D_contractPrices As Scripting.Dictionary
 Public D_warnings As Scripting.Dictionary
 Public D_errors As Scripting.Dictionary
 
@@ -15,7 +16,16 @@ Public Const CNST_contractPricesSheetName As String = "Sopimushinnat"
 Sub contractColumnsMacro()
 
     Call setDictsWorkbooksAndSheets()
+    If D_errors.Count > 0 Then GoTo ErrorHandling
     Call gatherContractPrices()
+    If D_errors.Count > 0 Then GoTo ErrorHandling
+    Call insertPopulateNewColumns()
+    If D_errors.Count > 0 Then GoTo ErrorHandling
+    Call cleanup()
+
+    Exit Sub
+ErrorHandling:
+    Call warningsAndErrors()
     Call cleanup()
 
 End Sub
@@ -42,7 +52,7 @@ Private Sub runChecks()
     Next ws
 
     If Not bool_contractPricesSheet Then 
-        D_errors.Add "Sopimushinnat -välilehti puuttuu", True
+        Call addError(404, "Sopimushinnat -välilehti puuttuu")
     Else
         Set contractPricesSheet = thisWB.Sheets(CNST_contractPricesSheetName)
     End If
@@ -57,6 +67,7 @@ End Sub
 
 Private Sub setDictsWorkbooksAndSheets()
 
+    Set D_contractPrices = New Scripting.Dictionary
     Set D_warnings = New Scripting.Dictionary
     Set D_errors = New Scripting.Dictionary
     Set thisWB = ThisWorkbook
@@ -64,7 +75,6 @@ Private Sub setDictsWorkbooksAndSheets()
     Set sourceSheet = setSourceSheet()
 
     If D_errors.Count > 0 Then
-        Call warningsAndErrors
         Exit Sub
     End If
 
@@ -115,7 +125,7 @@ Private Function createSheet() As Worksheet
     Dim sheetName As String
     Dim ws As Worksheet
 
-    Dim i As Integer
+    Dim i As Long
 
     Dim y As Integer
     Dim m As Integer
@@ -152,14 +162,24 @@ End Function
 Sub gatherContractPrices()
 
     Dim contractPrices As Variant
-    Dim i As Integer
-    Dim j As Integer
-    Dim key as Variant
+    Dim contractPricesObj As ContractPrices
+    Dim i As Long
+    Dim j As Long
+    Dim key As Variant
+    Dim nRows As Long
 
 
     contractPrices = contractPricesSheet.Range("A1").CurrentRegion.Value
+    nRows = UBound(contractPrices, 1)
 
-    For i = 3 to UBound(contractPrices, 1)
+    If nRows < 3 Then
+        Call addError(404, "Ei lainkaan määritelty lisättäviä sopimushintoja")
+        Exit Sub
+    End If
+
+    For i = 3 to nRows
+
+        Set contractPricesObj = New ContractPrices
 
         key = contractPrices(i, 1)
 
@@ -172,8 +192,77 @@ Sub gatherContractPrices()
         contractPricesObj.marketScien = contractPrices(i, 8)
         contractPricesObj.stratCons = contractPrices(i, 9)
 
+        D_contractPrices.Add key, contractPricesObj
+
     Next i
 
+
+End Sub
+
+Sub insertPopulateNewColumns()
+
+    'Hmm, need to rethink this logic maybe. concatenate headings?
+    Dim heading1 As String
+    Dim heading2 As String
+    Dim concatenatedHeading As String
+    Dim newColumnHeading As String
+
+    Dim column As Long
+    Dim contractPricesObj As ContractPrices
+
+    Set contractPricesObj = D_contractPrices.Items(1)
+
+    For column = 3 to 70
+
+        heading1 = resultSheet.Cells(4, column)
+        heading2 = resultSheet.Cells(5, column)
+        concatenatedHeading = heading1 & heading2
+        newColumnHeading = contractPricesObj.fetchColumnHeading(concatenatedHeading)
+
+        If newColumnHeading <> "" Then
+            Call insertColumn(column + 1, newColumnHeading)
+            Call handleRows(column + 1, concatenatedHeading)
+            column = column + 1
+        End If
+
+    Next column
+
+
+End Sub
+
+Sub insertColumn(insertLocation As Long, columnHeader As String)
+
+    resultSheet.Cells(1, insertLocation).EntireColumn.Insert
+    resultSheet.Cells(5, insertLocation) = columnHeader
+
+End Sub
+
+Sub handleRows(columnIndex As Long, concatenatedHeading As String)
+
+    Dim row As Long
+    Dim companyName As Variant
+    Dim contractPricesObj As ContractPrices
+    Dim insertValue As Double
+
+    'fetch correct contractPricesObj based on CompanyName
+
+    For row = 6 to 1000
+
+        companyName = resultSheet.Cells(row, 1)
+
+        If companyName = "" Then Exit Sub
+
+        If D_contractPrices.Exists(companyName) Then
+            Set contractPricesObj = D_contractPrices(companyName)
+            insertValue = contractPricesObj.fetchCorrectValue(concatenatedHeading)
+            If insertValue <> -404 Then
+                resultSheet.Cells(row, columnIndex) = insertValue
+            Else
+                Call addWarning(404, "Did not find heading " & concatenatedHeading & " for company " & companyName)
+            End If
+        End If
+
+    Next row
 
 End Sub
 
@@ -232,7 +321,7 @@ Private Sub warningsAndErrors()
     error = ""
 
     For Each key In D_errors.Keys()
-            error = error & vbCrLf & key
+            error = error & vbCrLf & key & ": " & D_errors(key)
     Next key
     If error <> "" Then MsgBox error, vbCritical, "Virheet makron ajossa"
 
@@ -248,7 +337,7 @@ Sub saveByDateTime()
 
     filenameAndPath = ThisWorkbook.Path & "\SopimusHinnatPohja_" & Year(Now()) & "_" & Month(Now()) & "_" & Day(Now()) & "_klo_" & Hour(Now()) & "_" & Minute(Now()) & ".xlsm"
 
-    ActiveWorkbook.SaveAs Filename:=filenameAndPath
+    ThisWorkbook.SaveAs Filename:=filenameAndPath
 
 End Sub
 
