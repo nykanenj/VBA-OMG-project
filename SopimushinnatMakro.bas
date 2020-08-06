@@ -6,20 +6,31 @@ Public sourceSheet As Worksheet
 Public resultSheet As Worksheet
 Public errorSheet As Worksheet
 
+Public FORMULA_clientServices As String
+Public FORMULA_digi As String
+Public FORMULA_programmatic As String
+Public FORMULA_SI As String
+Public FORMULA_TPHD_total As String
+
 Public D_contractPrices As Scripting.Dictionary
 Public D_warnings As Scripting.Dictionary
 Public D_errors As Scripting.Dictionary
+
+Public VAR_formulaIndex As Integer
 
 Public Const CNST_errorSheetName As String = "Virheet Makroajossa"
 Public Const CNST_contractPricesSheetName As String = "Sopimushinnat"
 
 Sub contractColumnsMacro()
 
+    Call initializeFormulas()
     Call setDictsWorkbooksAndSheets()
     If D_errors.Count > 0 Then GoTo ErrorHandling
     Call gatherContractPrices()
     If D_errors.Count > 0 Then GoTo ErrorHandling
     Call insertPopulateNewColumns()
+    If D_errors.Count > 0 Then GoTo ErrorHandling
+    Call insertPopulateFormulas()
     If D_errors.Count > 0 Then GoTo ErrorHandling
     Call cleanup()
 
@@ -27,6 +38,16 @@ Sub contractColumnsMacro()
 ErrorHandling:
     Call warningsAndErrors()
     Call cleanup()
+
+End Sub
+
+Private Sub initializeFormulas()
+
+    FORMULA_clientServices = "("
+    FORMULA_digi = "("
+    FORMULA_programmatic = "("
+    FORMULA_SI = "("
+    FORMULA_TPHD_total = "("
 
 End Sub
 
@@ -159,7 +180,7 @@ Continue:
 
 End Function
 
-Sub gatherContractPrices()
+Private Sub gatherContractPrices()
 
     Dim contractPrices As Variant
     Dim contractPricesObj As ContractPrices
@@ -191,6 +212,17 @@ Sub gatherContractPrices()
         contractPricesObj.digAnalytic = contractPrices(i, 7)
         contractPricesObj.marketScien = contractPrices(i, 8)
         contractPricesObj.stratCons = contractPrices(i, 9)
+        contractPricesObj.clservDigplan = contractPrices(i, 10)
+        contractPricesObj.some = contractPrices(i, 11)
+        contractPricesObj.sem = contractPrices(i, 12)
+        contractPricesObj.prog = contractPrices(i, 13)
+        contractPricesObj.cxSeoCpoCont = contractPrices(i, 14)
+        contractPricesObj.cxCustDev = contractPrices(i, 15)
+        contractPricesObj.cxInsDmp = contractPrices(i, 16)
+        contractPricesObj.pro = contractPrices(i, 17)
+        contractPricesObj.video = contractPrices(i, 18)
+        contractPricesObj.ia = contractPrices(i, 19)
+        contractPricesObj.bonusKord = contractPrices(i, 20)
 
         D_contractPrices.Add key, contractPricesObj
 
@@ -199,9 +231,8 @@ Sub gatherContractPrices()
 
 End Sub
 
-Sub insertPopulateNewColumns()
+Private Sub insertPopulateNewColumns()
 
-    'Hmm, need to rethink this logic maybe. concatenate headings?
     Dim heading1 As String
     Dim heading2 As String
     Dim concatenatedHeading As String
@@ -212,7 +243,7 @@ Sub insertPopulateNewColumns()
 
     Set contractPricesObj = D_contractPrices.Items(1)
 
-    For column = 3 to 70
+    For column = 3 to 100
 
         heading1 = resultSheet.Cells(4, column)
         heading2 = resultSheet.Cells(5, column)
@@ -230,14 +261,44 @@ Sub insertPopulateNewColumns()
 
 End Sub
 
-Sub insertColumn(insertLocation As Long, columnHeader As String)
+Private Sub insertColumn(insertLocation As Long, columnHeader As String)
 
     resultSheet.Cells(1, insertLocation).EntireColumn.Insert
     resultSheet.Cells(5, insertLocation) = columnHeader
+    Call addToFormula(insertLocation, columnHeader)
 
 End Sub
 
-Sub handleRows(columnIndex As Long, concatenatedHeading As String)
+Private Sub addToFormula(columnIndex As Long, columnHeader As String)
+
+    Dim hoursCell As String
+    Dim hourlyCostCell As String
+    Dim formulaStub As String
+
+    hoursCell = resultSheet.Cells(6, columnIndex - 2).Address(rowAbsolute:=False, ColumnAbsolute:=False)
+    hourlyCostCell = resultSheet.Cells(6, columnIndex).Address(rowAbsolute:=False, ColumnAbsolute:=False)
+
+    formulaStub = hoursCell & "*" & hourlyCostCell & "+"
+
+    'TODO populate below
+
+    Select Case columnHeader
+        Case "Client Partners Sopimushinta", "Client Services Sopimushinta", "CI Services Planning Sopimushinta", "PRO Sopimushinta", "Video Sopimushinta", "I&A Sopimushinta"
+            FORMULA_clientServices = FORMULA_clientServices + formulaStub
+        Case "A" 
+            FORMULA_digi = FORMULA_digi + formulaStub
+        Case "B"
+            FORMULA_programmatic = FORMULA_programmatic + formulaStub
+        Case "C"
+            FORMULA_SI = FORMULA_SI + formulaStub
+        Case "D"
+            FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
+
+    End Select
+
+End Sub
+
+Private Sub handleRows(columnIndex As Long, concatenatedHeading As String)
 
     Dim row As Long
     Dim companyName As Variant
@@ -266,7 +327,95 @@ Sub handleRows(columnIndex As Long, concatenatedHeading As String)
 
 End Sub
 
-Sub cleanup()
+Private Sub insertPopulateFormulas()
+
+    'Under construction
+
+    Dim heading1 As String
+    Dim heading2 As String
+    Dim concatenatedHeading As String
+    Dim newColumnHeading As String
+
+    VAR_formulaIndex = 1
+
+    For column = 30 to 150
+
+        heading1 = resultSheet.Cells(4, column)
+        heading2 = resultSheet.Cells(5, column)
+        concatenatedHeading = heading1 & heading2
+        newColumnHeading = checkFormulaInsertPoint(concatenatedHeading)
+
+        If newColumnHeading <> "" Then
+            resultSheet.Cells(1, column + 1).EntireColumn.Insert
+            Call populateFormula(column + 1, newColumnHeading) 'TODO Create Sub
+            column = column + 1
+        End If
+
+    Next column
+
+End Sub
+
+Private Function checkFormulaInsertPoint(columnHeading As String) As String
+
+    Dim heading As String
+
+    heading = columnHeading & VAR_formulaIndex 'declare index as public variable somewhere
+
+    Select Case heading
+    Case "TotalKTH1"
+        checkFormulaInsertPoint = "ClientService&Offline"
+        VAR_formulaIndex = 2
+    Case "TotalKTH2"
+        checkFormulaInsertPoint = "Digi"
+        VAR_formulaIndex = 3
+    Case "TotalKTH3"
+        checkFormulaInsertPoint = "Programmatic"
+        VAR_formulaIndex = 4
+    Case "TotalKTH4"
+        checkFormulaInsertPoint = "S&I"
+        VAR_formulaIndex = 5
+    Case "TotalKTH5"
+        checkFormulaInsertPoint = "TPHD Total"
+    Case Else  
+        checkFormulaInsertPoint = ""
+    End Select
+
+End Function
+
+Private Sub populateFormula(column As Integer, newColumnHeading As String)
+
+    Dim formula As String
+    Dim totalCellAddress As String
+    Dim insertCell As Range
+
+    totalCellAddress = resultSheet.Cells(6, column - 2).Address
+    Set insertCell = resultSheet.Cells(6, column)
+
+    'Note on the zero in formulas: one option would be to drop the extra "+" sign at the end of the formula.
+    'But adding zero is a much simpler and cleaner solution.
+
+    Select Case newColumnHeading
+    Case "ClientService&Offline"
+        formula = FORMULA_clientServices & "0)/" & totalCellAddress
+    Case "Digi"
+        formula = FORMULA_digi & "0)/" & totalCellAddress
+    Case "Programmatic"
+        formula = FORMULA_programmatic & "0)/" & totalCellAddress
+    Case "S&I"
+        formula = FORMULA_SI & "0)/" & totalCellAddress
+    Case "TPHD Total"
+        formula = FORMULA_TPHD_total & "0)/" & totalCellAddress
+    Case Else
+        Call addWarning(404, "Could not find a formula to insert into cell " & insertCell.Address)
+    End Select
+
+    insertCell.Value = formula
+
+    'TODO: Copy down the formula.
+
+End Sub
+
+Private Sub cleanup()
 
     sourceWB.Close SaveChanges:= False
 
