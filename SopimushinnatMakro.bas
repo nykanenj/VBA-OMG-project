@@ -18,6 +18,7 @@ Public D_errors As Scripting.Dictionary
 
 Public VAR_formulaIndex As Integer
 Public VAR_resultSheetLastRow As Long
+Public VAR_executionLog As String
 
 Public Const CNST_errorSheetName As String = "Virheet Makroajossa"
 Public Const CNST_contractPricesSheetName As String = "Sopimushinnat"
@@ -120,6 +121,8 @@ Private Function setSourceSheet() As WorkSheet
         GoTo handleError
     End If
 
+    Call addExecutionLog(">Identified sourcefile: " &  strFile & vbCrLf)
+
     'Do While strFile <> ""
     Set sourceWB = Workbooks.Open(Filename:=strPath & strFile)
     DoEvents
@@ -199,6 +202,8 @@ Private Sub gatherContractPrices()
         Exit Sub
     End If
 
+    Call addExecutionLog(">Gathering contract prices from sheet: " & contractPricesSheet.Name & vbCrLf)
+
     For i = 3 to nRows
 
         Set contractPricesObj = New ContractPrices
@@ -244,6 +249,8 @@ Private Sub insertPopulateNewColumns()
 
     Set contractPricesObj = D_contractPrices.Items(1)
 
+    Call addExecutionLog(">Adding columns")
+
     For column = 3 to 100
 
         heading1 = resultSheet.Cells(4, column)
@@ -264,6 +271,7 @@ End Sub
 
 Private Sub insertColumn(insertLocation As Long, columnHeader As String)
 
+    Call addExecutionLog("   Column: " & columnHeader)
     resultSheet.Cells(1, insertLocation).EntireColumn.Insert
     resultSheet.Cells(5, insertLocation) = columnHeader
     Call addToFormula(insertLocation, columnHeader)
@@ -423,6 +431,8 @@ Private Sub populateFormula(column As Integer, newColumnHeading As String)
     Dim insertCell As Range
     Dim lastCell As Range
 
+    Call addExecutionLog("   Formula:" & newColumnHeading)
+
     totalCellAddress = resultSheet.Cells(6, column - 2).Address(rowAbsolute:=False, ColumnAbsolute:=False)
     Set insertCell = resultSheet.Cells(6, column)
     Set lastCell = resultSheet.Cells(VAR_resultSheetLastRow, column)
@@ -453,6 +463,8 @@ End Sub
 Private Sub cleanup()
 
     sourceWB.Close SaveChanges:= False
+    Call addExecutionLog(vbCrLf & "---Execution complete!---")
+    Call printExecutionLog
 
 End Sub
 
@@ -512,6 +524,18 @@ Private Sub warningsAndErrors()
     errorSheet.Range("A1") = warning
     errorSheet.Range("A2") = error
     DoEvents
+
+End Sub
+
+Private Sub addExecutionLog(text AS String)
+
+    VAR_executionLog = VAR_executionLog & text & vbCrLf  
+
+End Sub
+
+Private Sub printExecutionLog()
+
+    MsgBox VAR_executionLog
 
 End Sub
 
