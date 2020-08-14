@@ -17,6 +17,7 @@ Public D_warnings As Scripting.Dictionary
 Public D_errors As Scripting.Dictionary
 
 Public VAR_formulaIndex As Integer
+Public VAR_resultSheetLastRow As Long
 
 Public Const CNST_errorSheetName As String = "Virheet Makroajossa"
 Public Const CNST_contractPricesSheetName As String = "Sopimushinnat"
@@ -43,11 +44,11 @@ End Sub
 
 Private Sub initializeFormulas()
 
-    FORMULA_clientServices = "=IFERROR("
-    FORMULA_digi = "=IFERROR("
-    FORMULA_programmatic = "=IFERROR("
-    FORMULA_SI = "=IFERROR("
-    FORMULA_TPHD_total = "=IFERROR("
+    FORMULA_clientServices = "=IFERROR(("
+    FORMULA_digi = "=IFERROR(("
+    FORMULA_programmatic = "=IFERROR(("
+    FORMULA_SI = "=IFERROR(("
+    FORMULA_TPHD_total = "=IFERROR(("
 
 End Sub
 
@@ -287,10 +288,10 @@ Private Sub addToFormula(columnIndex As Long, columnHeader As String)
             FORMULA_clientServices = FORMULA_clientServices + formulaStub
             FORMULA_SI = FORMULA_SI + formulaStub
             FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
-        Case "Client Partners Sopimushinta", "Client Services Sopimushinta", "CI Services Planning Sopimushinta", "PRO Sopimushinta", "Video Sopimushinta", 
+        Case "Client Partners Sopimushinta", "Client Services Sopimushinta", "CI Services Planning Sopimushinta", "PRO Sopimushinta", "Video Sopimushinta"
             FORMULA_clientServices = FORMULA_clientServices + formulaStub
             FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
-        Case "Dig Analytic Sopimushinta", "cl serv /dig Sopimushinta", "SOME Sopimushinta", "SEM Sopimushinta", "CX SEO,CPO Cont Sopimushinta", "CX Cust Dev Sopimushinta", "CX Ins.&DMP Sopimushinta" 
+        Case "Dig Analytic Sopimushinta", "cl serv /dig Sopimushinta", "SOME Sopimushinta", "SEM Sopimushinta", "CX SEO,CPO Cont Sopimushinta", "CX Cust Dev Sopimushinta", "CX Ins.&DMP Sopimushinta"
             FORMULA_digi = FORMULA_digi + formulaStub
             FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
         Case "PROG Sopimushinta"
@@ -334,12 +335,15 @@ End Sub
 
 Private Sub insertPopulateFormulas()
 
-    'Under construction
-
     Dim heading1 As String
     Dim heading2 As String
     Dim concatenatedHeading As String
     Dim newColumnHeading As String
+
+    resultSheet.Activate
+    DoEvents
+
+    Call initializeLastRow()
 
     VAR_formulaIndex = 0
 
@@ -357,6 +361,28 @@ Private Sub insertPopulateFormulas()
         End If
 
     Next column
+
+End Sub
+
+Private Sub initializeLastRow()
+
+    Dim i As Long
+    Dim text1 As String
+    Dim text2 As String
+    Dim combinedText As String
+
+    'For loop safer, will not loop forever
+    For i = 6 To 50000
+        
+        text1 = resultSheet.Cells(i, 1)
+        text2 = resultSheet.Cells(i, 1)
+        combinedText = text1 & text2
+
+        If combinedText = "" Then Exit For
+
+    Next i
+    
+    VAR_resultSheetLastRow = i
 
 End Sub
 
@@ -395,32 +421,32 @@ Private Sub populateFormula(column As Integer, newColumnHeading As String)
     Dim formula As String
     Dim totalCellAddress As String
     Dim insertCell As Range
+    Dim lastCell As Range
 
     totalCellAddress = resultSheet.Cells(6, column - 2).Address(rowAbsolute:=False, ColumnAbsolute:=False)
     Set insertCell = resultSheet.Cells(6, column)
+    Set lastCell = resultSheet.Cells(VAR_resultSheetLastRow, column)
 
     'Note on the zero in formulas: one option would be to drop the extra "+" sign at the end of the formula.
     'But adding zero is a much simpler and cleaner solution.
 
     Select Case newColumnHeading
     Case "ClientService&Offline"
-        formula = FORMULA_clientServices & "0)/" & totalCellAddress & ";0)"
+        formula = FORMULA_clientServices & "0)/" & totalCellAddress & ",0)"
     Case "Digi"
-        formula = FORMULA_digi & "0)/" & totalCellAddress & ";0)"
+        formula = FORMULA_digi & "0)/" & totalCellAddress & ",0)"
     Case "Programmatic"
-        formula = FORMULA_programmatic & "0)/" & totalCellAddress & ";0)"
+        formula = FORMULA_programmatic & "0)/" & totalCellAddress & ",0)"
     Case "S&I"
-        formula = FORMULA_SI & "0)/" & totalCellAddress & ";0)"
+        formula = FORMULA_SI & "0)/" & totalCellAddress & ",0)"
     Case "TPHD Total"
-        formula = FORMULA_TPHD_total & "0)/" & totalCellAddress & ";0)"
+        formula = FORMULA_TPHD_total & "0)/" & totalCellAddress & ",0)"
     Case Else
         Call addWarning(404, "Could not find a formula to insert into cell " & insertCell.Address)
     End Select
 
     insertCell.Formula = formula
-
-    'TODO: Copy down the formula.
-    
+    resultSheet.Range(insertCell, lastCell).FillDown
 
 End Sub
 
