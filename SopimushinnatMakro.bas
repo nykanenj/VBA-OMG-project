@@ -23,31 +23,31 @@ Public Const CNST_contractPricesSheetName As String = "Sopimushinnat"
 
 Sub contractColumnsMacro()
 
-    Call initializeFormulas()
-    Call setDictsWorkbooksAndSheets()
+    Call initializeFormulas
+    Call setDictsWorkbooksAndSheets
     If D_errors.Count > 0 Then GoTo ErrorHandling
-    Call gatherContractPrices()
+    Call gatherContractPrices
     If D_errors.Count > 0 Then GoTo ErrorHandling
-    Call insertPopulateNewColumns()
+    Call insertPopulateNewColumns
     If D_errors.Count > 0 Then GoTo ErrorHandling
-    Call insertPopulateFormulas()
+    Call insertPopulateFormulas
     If D_errors.Count > 0 Then GoTo ErrorHandling
-    Call cleanup()
+    Call cleanup
 
     Exit Sub
 ErrorHandling:
-    Call warningsAndErrors()
-    Call cleanup()
+    Call warningsAndErrors
+    Call cleanup
 
 End Sub
 
 Private Sub initializeFormulas()
 
-    FORMULA_clientServices = "("
-    FORMULA_digi = "("
-    FORMULA_programmatic = "("
-    FORMULA_SI = "("
-    FORMULA_TPHD_total = "("
+    FORMULA_clientServices = "=IFERROR("
+    FORMULA_digi = "=IFERROR("
+    FORMULA_programmatic = "=IFERROR("
+    FORMULA_SI = "=IFERROR("
+    FORMULA_TPHD_total = "=IFERROR("
 
 End Sub
 
@@ -92,7 +92,7 @@ Private Sub setDictsWorkbooksAndSheets()
     Set D_warnings = New Scripting.Dictionary
     Set D_errors = New Scripting.Dictionary
     Set thisWB = ThisWorkbook
-    Call runChecks()
+    Call runChecks
     Set sourceSheet = setSourceSheet()
 
     If D_errors.Count > 0 Then
@@ -283,17 +283,22 @@ Private Sub addToFormula(columnIndex As Long, columnHeader As String)
     'TODO populate below
 
     Select Case columnHeader
-        Case "Client Partners Sopimushinta", "Client Services Sopimushinta", "CI Services Planning Sopimushinta", "PRO Sopimushinta", "Video Sopimushinta", "I&A Sopimushinta"
+        Case "I&A Sopimushinta" 'Esiintyy kahdessa kaavassa
             FORMULA_clientServices = FORMULA_clientServices + formulaStub
-        Case "A" 
-            FORMULA_digi = FORMULA_digi + formulaStub
-        Case "B"
-            FORMULA_programmatic = FORMULA_programmatic + formulaStub
-        Case "C"
             FORMULA_SI = FORMULA_SI + formulaStub
-        Case "D"
             FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
-
+        Case "Client Partners Sopimushinta", "Client Services Sopimushinta", "CI Services Planning Sopimushinta", "PRO Sopimushinta", "Video Sopimushinta", 
+            FORMULA_clientServices = FORMULA_clientServices + formulaStub
+            FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
+        Case "Dig Analytic Sopimushinta", "cl serv /dig Sopimushinta", "SOME Sopimushinta", "SEM Sopimushinta", "CX SEO,CPO Cont Sopimushinta", "CX Cust Dev Sopimushinta", "CX Ins.&DMP Sopimushinta" 
+            FORMULA_digi = FORMULA_digi + formulaStub
+            FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
+        Case "PROG Sopimushinta"
+            FORMULA_programmatic = FORMULA_programmatic + formulaStub
+            FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
+        Case "Customer Insight Sopimushinta", "Dash&Tech Sopimushinta", "Market Scien Sopimushinta", "Strat&Cons Sopimushinta"
+            FORMULA_SI = FORMULA_SI + formulaStub
+            FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
     End Select
 
 End Sub
@@ -336,7 +341,7 @@ Private Sub insertPopulateFormulas()
     Dim concatenatedHeading As String
     Dim newColumnHeading As String
 
-    VAR_formulaIndex = 1
+    VAR_formulaIndex = 0
 
     For column = 30 to 150
 
@@ -362,6 +367,9 @@ Private Function checkFormulaInsertPoint(columnHeading As String) As String
     heading = columnHeading & VAR_formulaIndex 'declare index as public variable somewhere
 
     Select Case heading
+    Case "TotalKTH0"
+        checkFormulaInsertPoint = ""
+        VAR_formulaIndex = 1
     Case "TotalKTH1"
         checkFormulaInsertPoint = "ClientService&Offline"
         VAR_formulaIndex = 2
@@ -388,7 +396,7 @@ Private Sub populateFormula(column As Integer, newColumnHeading As String)
     Dim totalCellAddress As String
     Dim insertCell As Range
 
-    totalCellAddress = resultSheet.Cells(6, column - 2).Address
+    totalCellAddress = resultSheet.Cells(6, column - 2).Address(rowAbsolute:=False, ColumnAbsolute:=False)
     Set insertCell = resultSheet.Cells(6, column)
 
     'Note on the zero in formulas: one option would be to drop the extra "+" sign at the end of the formula.
@@ -396,22 +404,23 @@ Private Sub populateFormula(column As Integer, newColumnHeading As String)
 
     Select Case newColumnHeading
     Case "ClientService&Offline"
-        formula = FORMULA_clientServices & "0)/" & totalCellAddress
+        formula = FORMULA_clientServices & "0)/" & totalCellAddress & ";0)"
     Case "Digi"
-        formula = FORMULA_digi & "0)/" & totalCellAddress
+        formula = FORMULA_digi & "0)/" & totalCellAddress & ";0)"
     Case "Programmatic"
-        formula = FORMULA_programmatic & "0)/" & totalCellAddress
+        formula = FORMULA_programmatic & "0)/" & totalCellAddress & ";0)"
     Case "S&I"
-        formula = FORMULA_SI & "0)/" & totalCellAddress
+        formula = FORMULA_SI & "0)/" & totalCellAddress & ";0)"
     Case "TPHD Total"
-        formula = FORMULA_TPHD_total & "0)/" & totalCellAddress
+        formula = FORMULA_TPHD_total & "0)/" & totalCellAddress & ";0)"
     Case Else
         Call addWarning(404, "Could not find a formula to insert into cell " & insertCell.Address)
     End Select
 
-    insertCell.Value = formula
+    insertCell.Formula = formula
 
     'TODO: Copy down the formula.
+    
 
 End Sub
 
