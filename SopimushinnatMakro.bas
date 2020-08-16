@@ -160,10 +160,10 @@ Private Function createSheet() As Worksheet
     m = Month(Now())
     d = Day(Now())
 
-    sheetName = "Lopputulos_" & Day(Now()) & "_" & Month(Now()) & "_klo_" & Hour(Now()) & "_" & Minute(Now())
+    sheetName = "Lopputulos_" & Day(Now()) & "_" & Month(Now()) & "_" & Year(Now()) & "_klo_" & Hour(Now()) & "_" & Minute(Now())
 
     i = 0
-    Do While i < 10
+    Do While i < 30
         i = i + 1
 
         For Each ws In thisWB.Worksheets
@@ -362,6 +362,11 @@ Private Sub insertPopulateFormulas()
         concatenatedHeading = heading1 & heading2
         newColumnHeading = checkFormulaInsertPoint(concatenatedHeading)
 
+        If  concatenatedHeading = "TotalKTH YTD" Then
+            Call populateFormula(column - 1, "Billing Percentage") 
+            Exit For
+        End If
+
         If newColumnHeading <> "" Then
             resultSheet.Cells(1, column + 1).EntireColumn.Insert
             Call populateFormula(column + 1, newColumnHeading) 'TODO Create Sub
@@ -428,8 +433,11 @@ Private Sub populateFormula(column As Integer, newColumnHeading As String)
 
     Dim formula As String
     Dim totalCellAddress As String
+
     Dim insertCell As Range
     Dim lastCell As Range
+    Dim helperCell1 As String
+    Dim helperCell2 As String
 
     Call addExecutionLog("   Formula:" & newColumnHeading)
 
@@ -451,10 +459,21 @@ Private Sub populateFormula(column As Integer, newColumnHeading As String)
         formula = FORMULA_SI & "0)/" & totalCellAddress & ",0)"
     Case "TPHD Total"
         formula = FORMULA_TPHD_total & "0)/" & totalCellAddress & ",0)"
+    Case "Billing Percentage"
+        helperCell1 = resultSheet.Cells(6, column - 2).Address(rowAbsolute:=False, ColumnAbsolute:=False)
+        helperCell2 = resultSheet.Cells(6, column - 1).Address(rowAbsolute:=False, ColumnAbsolute:=False)
+        formula = "=IFERROR(" & helperCell1 & "/" & helperCell2 & ",0)"
+        insertCell.NumberFormat = "0%"
     Case Else
         Call addWarning(404, "Could not find a formula to insert into cell " & insertCell.Address)
     End Select
 
+    resultSheet.Cells(4, column) = "Total"
+    With resultSheet.Cells(5, column)
+        .Value = newColumnHeading
+        .HorizontalAlignment = xlHAlignLeft
+        .VerticalAlignment = xlVAlignTop
+    End With
     insertCell.Formula = formula
     resultSheet.Range(insertCell, lastCell).FillDown
 
@@ -470,11 +489,12 @@ End Sub
 
 Private Sub displayInstructions()
 
-    MsgBox "Ohjeet:" & vbCrLf & vbCrLf & _
+    MsgBox "" & _
     "1. Täytä 'Sopimushinnat' -välilehti." & vbCrLf & _
     "2. Lisää ohjelmasta saatu tuntiraportti samaan kansioon tämän tiedoston kanssa." & vbCrLf & _
     "3. Paina nappia 'Lisää sopimushinnat.'" & vbCrLf & _
-    "4. Yhdistetty lopputulos ilmestyy uudelle välilehdelle."
+    "4. Yhdistetty lopputulos ilmestyy uudelle välilehdelle." _
+    , vbInformation , "Ohjeet"
 End Sub
 
 Private Sub addError(i As Variant, error As String)
@@ -535,7 +555,7 @@ End Sub
 
 Private Sub printExecutionLog()
 
-    MsgBox VAR_executionLog
+    MsgBox VAR_executionLog, vbInformation ,"Info: Macro execution log"
 
 End Sub
 
