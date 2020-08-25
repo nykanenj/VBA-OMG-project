@@ -1,6 +1,6 @@
 
 Public thisWB As Workbook
-Public sourceWB as Workbook
+Public sourceWB As Workbook
 Public contractPricesSheet As Worksheet
 Public sourceSheet As Worksheet
 Public resultSheet As Worksheet
@@ -121,7 +121,7 @@ Private Function setSourceSheet() As WorkSheet
         GoTo handleError
     End If
 
-    Call addExecutionLog(">Identified sourcefile: " &  strFile & vbCrLf)
+    Call addExecutionLog(">Identified sourcefile: " & strFile & vbCrLf)
 
     'Do While strFile <> ""
     Set sourceWB = Workbooks.Open(Filename:=strPath & strFile)
@@ -347,7 +347,7 @@ Private Sub insertPopulateFormulas()
     resultSheet.Activate
     DoEvents
 
-    Call initializeLastRow()
+    Call initializeLastRow
 
     VAR_formulaIndex = 0
 
@@ -358,7 +358,7 @@ Private Sub insertPopulateFormulas()
         concatenatedHeading = heading1 & heading2
         newColumnHeading = checkFormulaInsertPoint(concatenatedHeading)
 
-        If  concatenatedHeading = "TotalKTH YTD" Then
+        If concatenatedHeading = "TotalKTH YTD" Then
             Call populateFormula(column - 1, "Billing Percentage") 
             Exit For
         End If
@@ -477,7 +477,7 @@ End Sub
 
 Private Sub cleanup()
 
-    sourceWB.Close SaveChanges:= False
+    sourceWB.Close SaveChanges:=False
     Call addExecutionLog(vbCrLf & "---Execution complete!---")
     Call printExecutionLog
 
@@ -490,7 +490,7 @@ Private Sub displayInstructions()
     "2. Lisää ohjelmasta saatu tuntiraportti samaan kansioon tämän tiedoston kanssa." & vbCrLf & _
     "3. Paina nappia 'Lisää sopimushinnat.'" & vbCrLf & _
     "4. Yhdistetty lopputulos ilmestyy uudelle välilehdelle." _
-    , vbInformation , "Ohjeet"
+    , vbInformation, "Ohjeet"
 End Sub
 
 Private Sub addError(i As Variant, error As String)
@@ -551,7 +551,7 @@ End Sub
 
 Private Sub printExecutionLog()
 
-    MsgBox VAR_executionLog, vbInformation ,"Info: Macro execution log"
+    MsgBox VAR_executionLog, vbInformation, "Info: Macro execution log"
 
 End Sub
 
