@@ -292,11 +292,7 @@ Private Sub addToFormula(columnIndex As Long, columnHeader As String)
     'TODO populate below
 
     Select Case columnHeader
-        Case "I&A Sopimushinta" 'Esiintyy kahdessa kaavassa
-            FORMULA_clientServices = FORMULA_clientServices + formulaStub
-            FORMULA_SI = FORMULA_SI + formulaStub
-            FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
-        Case "Client Partners Sopimushinta", "Client Services Sopimushinta", "CI Services Planning Sopimushinta", "PRO Sopimushinta", "Video Sopimushinta"
+        Case "Client Partners Sopimushinta", "Client Services Sopimushinta", "CI Services Planning Sopimushinta", "PRO Sopimushinta", "Video Sopimushinta", "I&A Sopimushinta"
             FORMULA_clientServices = FORMULA_clientServices + formulaStub
             FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
         Case "Dig Analytic Sopimushinta", "cl serv /dig Sopimushinta", "SOME Sopimushinta", "SEM Sopimushinta", "CX SEO,CPO Cont Sopimushinta", "CX Cust Dev Sopimushinta", "CX Ins.&DMP Sopimushinta"
