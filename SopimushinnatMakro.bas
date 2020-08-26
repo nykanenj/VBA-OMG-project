@@ -292,16 +292,16 @@ Private Sub addToFormula(columnIndex As Long, columnHeader As String)
     'TODO populate below
 
     Select Case columnHeader
-        Case "Client Partners Sopimushinta", "Client Services Sopimushinta", "CI Services Planning Sopimushinta", "PRO Sopimushinta", "Video Sopimushinta", "I&A Sopimushinta"
+        Case "Client Partners Sopimushinta", "Client Services Sopimushinta", "Cl Services Planning Sopimushinta", "PRO Sopimushinta", "Video Sopimushinta", "I&A Sopimushinta", "Bonus & Kord Sopimushinta"
             FORMULA_clientServices = FORMULA_clientServices + formulaStub
             FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
-        Case "Dig Analytic Sopimushinta", "cl serv /dig Sopimushinta", "SOME Sopimushinta", "SEM Sopimushinta", "CX SEO,CPO Cont Sopimushinta", "CX Cust Dev Sopimushinta", "CX Ins.&DMP Sopimushinta"
+        Case "cl serv /dig Sopimushinta", "SOME Sopimushinta", "SEM Sopimushinta", "CX SEO,CPO Cont Sopimushinta", "CX Cust Dev Sopimushinta", "CX Ins.&DMP Sopimushinta"
             FORMULA_digi = FORMULA_digi + formulaStub
             FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
         Case "PROG Sopimushinta"
             FORMULA_programmatic = FORMULA_programmatic + formulaStub
             FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
-        Case "Customer Insight Sopimushinta", "Dash&Tech Sopimushinta", "Market Scien Sopimushinta", "Strat&Cons Sopimushinta"
+        Case "Dig Analytic Sopimushinta", "Customer Insight Sopimushinta", "Dash&Tech Sopimushinta", "Market Scien Sopimushinta", "Strat&Cons Sopimushinta"
             FORMULA_SI = FORMULA_SI + formulaStub
             FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
     End Select
@@ -415,7 +415,7 @@ Private Function checkFormulaInsertPoint(columnHeading As String) As String
         checkFormulaInsertPoint = "Programmatic"
         VAR_formulaIndex = 4
     Case "TotalKTH4"
-        checkFormulaInsertPoint = "S&I"
+        checkFormulaInsertPoint = "Insight" '"S&I" mutta halutiin sarakkeeseen nimeksi Insight
         VAR_formulaIndex = 5
     Case "TotalKTH5"
         checkFormulaInsertPoint = "TPHD Total"
@@ -451,7 +451,7 @@ Private Sub populateFormula(column As Integer, newColumnHeading As String)
         formula = FORMULA_digi & "0)/" & totalCellAddress & ",0)"
     Case "Programmatic"
         formula = FORMULA_programmatic & "0)/" & totalCellAddress & ",0)"
-    Case "S&I"
+    Case "Insight"
         formula = FORMULA_SI & "0)/" & totalCellAddress & ",0)"
     Case "TPHD Total"
         formula = FORMULA_TPHD_total & "0)/" & totalCellAddress & ",0)"

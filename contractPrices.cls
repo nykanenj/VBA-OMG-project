@@ -72,7 +72,7 @@ Public Function fetchCorrectValue(columnHeading As String) As Double
         fetchCorrectValue = partnersSopimushinta
     Case "ClientServices KTH"
         fetchCorrectValue = servicesSopimushinta
-    Case "Cl ServicesPlanning KTH"
+    Case "Cl ServicesPlanning KTH" 'In ih I or l? It is l.
         fetchCorrectValue = planningSopimushinta
     Case "CustomerInsight KTH"
         fetchCorrectValue = insightSopimushinta
