@@ -358,15 +358,15 @@ Private Sub insertPopulateFormulas()
         concatenatedHeading = heading1 & heading2
         newColumnHeading = checkFormulaInsertPoint(concatenatedHeading)
 
-        If concatenatedHeading = "TotalKTH YTD" Then
-            Call populateFormula(column - 1, "Billing Percentage") 
-            Exit For
-        End If
-
         If newColumnHeading <> "" Then
             resultSheet.Cells(1, column + 1).EntireColumn.Insert
             Call populateFormula(column + 1, newColumnHeading) 'TODO Create Sub
             column = column + 1
+        End If
+
+        If newColumnHeading = "TPHD Total" Then
+            Call populateFormula(column + 1, "Billing Percentage")
+            Exit for
         End If
 
     Next column
