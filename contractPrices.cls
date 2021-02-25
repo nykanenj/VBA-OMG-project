@@ -13,8 +13,10 @@ Public prog As Double
 Public cxSeoCpoCont As Double
 Public cxCustDev As Double
 Public cxInsDmp As Double
-Public pro As Double
-Public video As Double
+Public proOffline As Double
+Public proCS As Double
+Public videoOffline As Double
+Public videoCS As Double
 Public ia As Double
 Public bonusKord As Double
 
@@ -51,10 +53,14 @@ Public Function fetchColumnHeading(columnHeading As String) As String
         fetchColumnHeading = "CX Cust Dev Sopimushinta"
     Case "CX Ins.&DMPKTH"
         fetchColumnHeading = "CX Ins.&DMP Sopimushinta"
-    Case "PROKTH"
-        fetchColumnHeading = "PRO Sopimushinta"
-    Case "VideoKTH"
-        fetchColumnHeading = "Video Sopimushinta"
+    Case "PRO OfflineKTH"
+        fetchColumnHeading = "PRO Offline Sopimushinta"
+    Case "PRO CSKTH"
+        fetchColumnHeading = "PRO CS Sopimushinta"
+    Case "Video OfflineKTH"
+        fetchColumnHeading = "Video Offline Sopimushinta"
+    Case "Video CSKTH"
+        fetchColumnHeading = "Video CS Sopimushinta"
     Case "I&AKTH" 'Is it I Or l? It is I
         fetchColumnHeading = "I&A Sopimushinta"
     Case "Bonus & KordKTH"
@@ -98,10 +104,14 @@ Public Function fetchCorrectValue(columnHeading As String) As Double
         fetchCorrectValue = cxCustDev
     Case "CX Ins.&DMPKTH"
         fetchCorrectValue = cxInsDmp
-    Case "PROKTH"
-        fetchCorrectValue = pro
-    Case "VideoKTH"
-        fetchCorrectValue = video
+    Case "PRO OfflineKTH"
+        fetchCorrectValue = proOffline
+    Case "PRO CSKTH"
+        fetchCorrectValue = proCS
+    Case "Video OfflineKTH"
+        fetchCorrectValue = videoOffline
+    Case "Video CSKTH"
+        fetchCorrectValue = videoCS
     Case "I&AKTH" 'Is it I Or l? It is I
         fetchCorrectValue = ia
     Case "Bonus & KordKTH"

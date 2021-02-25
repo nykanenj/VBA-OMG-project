@@ -6,7 +6,8 @@ Public sourceSheet As Worksheet
 Public resultSheet As Worksheet
 Public errorSheet As Worksheet
 
-Public FORMULA_clientServices As String
+Public FORMULA_clientService As String
+Public FORMULA_offline As String
 Public FORMULA_digi As String
 Public FORMULA_programmatic As String
 Public FORMULA_SI As String
@@ -45,7 +46,8 @@ End Sub
 
 Private Sub initializeFormulas()
 
-    FORMULA_clientServices = "=IFERROR(("
+    FORMULA_clientService = "=IFERROR(("
+    FORMULA_offline = "=IFERROR(("
     FORMULA_digi = "=IFERROR(("
     FORMULA_programmatic = "=IFERROR(("
     FORMULA_SI = "=IFERROR(("
@@ -225,10 +227,12 @@ Private Sub gatherContractPrices()
         contractPricesObj.cxSeoCpoCont = contractPrices(i, 14)
         contractPricesObj.cxCustDev = contractPrices(i, 15)
         contractPricesObj.cxInsDmp = contractPrices(i, 16)
-        contractPricesObj.pro = contractPrices(i, 17)
-        contractPricesObj.video = contractPrices(i, 18)
-        contractPricesObj.ia = contractPrices(i, 19)
-        contractPricesObj.bonusKord = contractPrices(i, 20)
+        contractPricesObj.proOffline = contractPrices(i, 17)
+        contractPricesObj.proCS = contractPrices(i, 18)
+        contractPricesObj.videoOffline = contractPrices(i, 19)
+        contractPricesObj.videoCS = contractPrices(i, 20)
+        contractPricesObj.ia = contractPrices(i, 21)
+        contractPricesObj.bonusKord = contractPrices(i, 22)
 
         D_contractPrices.Add key, contractPricesObj
 
@@ -292,8 +296,11 @@ Private Sub addToFormula(columnIndex As Long, columnHeader As String)
     'TODO populate below
 
     Select Case columnHeader
-        Case "Client Partners Sopimushinta", "Client Services Sopimushinta", "Cl Services Planning Sopimushinta", "PRO Sopimushinta", "Video Sopimushinta", "I&A Sopimushinta", "Bonus & Kord Sopimushinta"
-            FORMULA_clientServices = FORMULA_clientServices + formulaStub
+        Case "Client Partners Sopimushinta", "Client Services Sopimushinta", "Cl Services Planning Sopimushinta", "PRO CS Sopimushinta", "Video CS Sopimushinta", "Bonus & Kord Sopimushinta"
+            FORMULA_clientService = FORMULA_clientService + formulaStub
+            FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
+        Case "PRO Offline Sopimushinta", "Video Offline Sopimushinta", "I&A Sopimushinta"
+            FORMULA_offline = FORMULA_clientService + formulaStub
             FORMULA_TPHD_total = FORMULA_TPHD_total + formulaStub
         Case "cl serv /dig Sopimushinta", "SOME Sopimushinta", "SEM Sopimushinta", "CX SEO,CPO Cont Sopimushinta", "CX Cust Dev Sopimushinta", "CX Ins.&DMP Sopimushinta"
             FORMULA_digi = FORMULA_digi + formulaStub
@@ -317,7 +324,7 @@ Private Sub handleRows(columnIndex As Long, concatenatedHeading As String)
 
     'fetch correct contractPricesObj based on CompanyName
 
-    For row = 6 to 1000
+    For row = 6 to 2000
 
         companyName = resultSheet.Cells(row, 1)
 
@@ -351,7 +358,7 @@ Private Sub insertPopulateFormulas()
 
     VAR_formulaIndex = 0
 
-    For column = 30 to 150
+    For column = 40 to 170
 
         heading1 = resultSheet.Cells(4, column)
         heading2 = resultSheet.Cells(5, column)
@@ -360,7 +367,7 @@ Private Sub insertPopulateFormulas()
 
         If newColumnHeading <> "" Then
             resultSheet.Cells(1, column + 1).EntireColumn.Insert
-            Call populateFormula(column + 1, newColumnHeading) 'TODO Create Sub
+            Call populateFormula(column + 1, newColumnHeading)
             column = column + 1
         End If
 
@@ -390,8 +397,10 @@ Private Sub initializeLastRow()
         If combinedText = "" Then Exit For
 
     Next i
+
+    'addExecutionLog("LastRow: " & i)
     
-    VAR_resultSheetLastRow = i
+    VAR_resultSheetLastRow = i - 1
 
 End Sub
 
@@ -406,18 +415,21 @@ Private Function checkFormulaInsertPoint(columnHeading As String) As String
         checkFormulaInsertPoint = ""
         VAR_formulaIndex = 1
     Case "TotalKTH1"
-        checkFormulaInsertPoint = "ClientService&Offline"
+        checkFormulaInsertPoint = "ClientService"
         VAR_formulaIndex = 2
     Case "TotalKTH2"
-        checkFormulaInsertPoint = "Digi"
+        checkFormulaInsertPoint = "Offline"
         VAR_formulaIndex = 3
     Case "TotalKTH3"
-        checkFormulaInsertPoint = "Programmatic"
+        checkFormulaInsertPoint = "Digi"
         VAR_formulaIndex = 4
     Case "TotalKTH4"
-        checkFormulaInsertPoint = "Insight" '"S&I" mutta halutiin sarakkeeseen nimeksi Insight
+        checkFormulaInsertPoint = "Programmatic"
         VAR_formulaIndex = 5
     Case "TotalKTH5"
+        checkFormulaInsertPoint = "Insight" '"S&I" mutta halutiin sarakkeeseen nimeksi Insight
+        VAR_formulaIndex = 6
+    Case "TotalKTH6"
         checkFormulaInsertPoint = "TPHD Total"
     Case Else  
         checkFormulaInsertPoint = ""
@@ -445,8 +457,10 @@ Private Sub populateFormula(column As Integer, newColumnHeading As String)
     'But adding zero is a much simpler and cleaner solution.
 
     Select Case newColumnHeading
-    Case "ClientService&Offline"
-        formula = FORMULA_clientServices & "0)/" & totalCellAddress & ",0)"
+    Case "ClientService"
+        formula = FORMULA_clientService & "0)/" & totalCellAddress & ",0)"
+    Case "Offline"
+        formula = FORMULA_offline & "0)/" & totalCellAddress & ",0)"
     Case "Digi"
         formula = FORMULA_digi & "0)/" & totalCellAddress & ",0)"
     Case "Programmatic"
@@ -480,6 +494,11 @@ Private Sub cleanup()
     sourceWB.Close SaveChanges:=False
     Call addExecutionLog(vbCrLf & "---Execution complete!---")
     Call printExecutionLog
+
+    
+    D_contractPrices.RemoveAll
+    D_warnings.RemoveAll
+    D_errors.RemoveAll
 
 End Sub
 
