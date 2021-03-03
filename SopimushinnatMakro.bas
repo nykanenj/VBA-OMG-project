@@ -412,24 +412,21 @@ Private Function checkFormulaInsertPoint(columnHeading As String) As String
 
     Select Case heading
     Case "TotalKTH0"
-        checkFormulaInsertPoint = ""
+        checkFormulaInsertPoint = "ClientService"
         VAR_formulaIndex = 1
     Case "TotalKTH1"
-        checkFormulaInsertPoint = "ClientService"
+        checkFormulaInsertPoint = "Offline"
         VAR_formulaIndex = 2
     Case "TotalKTH2"
-        checkFormulaInsertPoint = "Offline"
+        checkFormulaInsertPoint = "Digi"
         VAR_formulaIndex = 3
     Case "TotalKTH3"
-        checkFormulaInsertPoint = "Digi"
+        checkFormulaInsertPoint = "Programmatic"
         VAR_formulaIndex = 4
     Case "TotalKTH4"
-        checkFormulaInsertPoint = "Programmatic"
+        checkFormulaInsertPoint = "Insight" '"S&I" mutta halutiin sarakkeeseen nimeksi Insight
         VAR_formulaIndex = 5
     Case "TotalKTH5"
-        checkFormulaInsertPoint = "Insight" '"S&I" mutta halutiin sarakkeeseen nimeksi Insight
-        VAR_formulaIndex = 6
-    Case "TotalKTH6"
         checkFormulaInsertPoint = "TPHD Total"
     Case Else  
         checkFormulaInsertPoint = ""
